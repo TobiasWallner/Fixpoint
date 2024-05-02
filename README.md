@@ -2,7 +2,12 @@ Fix32
 =====
 
 A fixpoint class with 32 bits and variable fractional bits as a template parameter.
-* Supports C++14
+* Supports C++14 and C++17
+
+# Use
+It is a header only library. Just include the file 'fix32.hpp'
+
+----
 
 ```C++
 template<size_t fractional_bits> class fix32
