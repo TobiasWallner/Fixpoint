@@ -4,13 +4,51 @@ Fix32
 A fixpoint class with 32 bits and variable fractional bits as a template parameter.
 * Supports C++14
 
-``` 
+```C++
 template<size_t fractional_bits> class fix32
 ```
 
-## Static Member Functions
+## Constructors
 
+```C++
+constexpr fix32() // 1
+constexpr fix32(const fix32&) // 2
+constexpr fix32(int32_t number) // 3
 ```
+
+1) default constructs without initialisation
+2) copy constructor
+3) constructs from intager value with shift conversion like `static constexpr from(int32_t number)`
+
+## Arithmetic Operators
+
+```C++
+constexpr friend fix32 operator+ (fix32 lhs, fix32 rhs)
+constexpr friend fix32 operator- (fix32 lhs, fix32 rhs)
+constexpr friend fix32 operator* (fix32 lhs, fix32 rhs)
+constexpr friend fix32 operator/ (fix32 lhs, fix32 rhs)
+```
+
+```C++
+constexpr fix32& operator+= (fix32 rhs){return *this = *this + rhs;}
+constexpr fix32& operator-= (fix32 rhs){return *this = *this - rhs;}
+constexpr fix32& operator*= (fix32 rhs){return *this = *this * rhs;}
+constexpr fix32& operator/= (fix32 rhs){return *this = *this / rhs;}
+```
+
+## Comparison operators
+
+```C++
+constexpr friend bool operator== (fix32 lhs, fix32 rhs)
+constexpr friend bool operator< (fix32 lhs, fix32 rhs)
+constexpr friend bool operator> (fix32 lhs, fix32 rhs)
+constexpr friend bool operator<= (fix32 lhs, fix32 rhs)
+constexpr friend bool operator>= (fix32 lhs, fix32 rhs)
+```
+
+## Conversions
+
+```C++
 static constexpr from(int32_t number)
 ```
 Constructs a fixpoint and converts the integer value to the fixpoint value by shifting it accordingly.
@@ -18,10 +56,31 @@ Constructs a fixpoint and converts the integer value to the fixpoint value by sh
 
 ----
 	
-```
-static constexpr reinterpret_from(int32_t number)
+```C++
+static constexpr reinterpret(int32_t number)
 ```
 Constructs a fixpoint and reinterprets the integer as an fixpoint 'as is' without any operations.
 (reinterpret casting)
 
 ---- 
+
+```C++ 
+constexpr operator int32_t ()
+constexpr friend int32_t static_cast_to_int32_t(fix32 f)
+```
+static cast. Converts the fixpoint number to an integer by removeing all information stored in the fractional bits.
+
+```C++
+constexpr operator float ()
+constexpr operator double ()
+```
+static cast. Converts the fixpoint to a floating point representation
+
+----
+
+```C++
+constexpr friend int32_t reinterpret_as_int32_t(fix32 f)
+```
+reinterpret cast. Converts the fixpoint number to an integer by keeping all bits 'as is'.
+
+
