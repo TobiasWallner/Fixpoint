@@ -94,7 +94,7 @@ reinterpret cast. Converts the fixpoint number to an integer by keeping all bits
 
 ----
 
-```
+```C++
 template<size_t other_frac_bits>
 explicit constexpr operator fix32<other_frac_bits> ()
 ```
