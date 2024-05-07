@@ -15,6 +15,8 @@
 	#define FIX32_IF_CONSTEXPR 
 #endif
 
+#include <bitset>
+
 template<size_t fractional_bits>
 class fix32{
 private:
@@ -23,9 +25,23 @@ private:
 public:
 	constexpr fix32() = default;
 	constexpr fix32(const fix32&) = default;
-	constexpr fix32(int32_t number){
-		this->value = number << fractional_bits;
+	constexpr fix32(int32_t number) : value(number << fractional_bits){}
+	constexpr fix32(float num) {
+		if (num != 0.f) {
+			const int32_t inum = *reinterpret_cast<const uint32_t*>(&num);
+			const int32_t float_mantissa = (inum & 0x07FFFFF) | 0x0800000;
+			const int32_t float_exponent = ((inum & 0x7F800000) >> 23) - 127;
+			const bool float_sign = (*reinterpret_cast<int32_t*>(&num) & 0x80000000) != 0;
+			const int32_t shifts = fractional_bits - 23 + float_exponent;
+			const int32_t abs_value = (shifts >= 0) ? float_mantissa << shifts : float_mantissa >> -shifts;
+			this->value = (float_sign) ? -abs_value : abs_value;
+		}
+		else {
+			this->value = 0;
+		}
 	}
+	
+	constexpr fix32(double num) : fix32(static_cast<float>(num)){}
 	
 	template<size_t other_frac_bits>
 	constexpr fix32(const fix32<other_frac_bits>& other){
@@ -45,6 +61,12 @@ public:
 		return result;
 	}
 	
+	constexpr friend fix32 operator- (fix32 a){
+		fix32 result;
+		result.value = -a.value;
+		return result;
+	}
+	
 	constexpr friend fix32 operator- (fix32 lhs, fix32 rhs){
 		fix32 result;
 		result.value = lhs.value - rhs.value;
@@ -53,7 +75,7 @@ public:
 	
 	constexpr friend fix32 operator* (fix32 lhs, fix32 rhs){
 		int64_t temp = static_cast<int64_t>(lhs.value) * static_cast<int64_t>(rhs.value);
-		return fix32::reinterpret(static_cast<int32_t>(temp >> fractional_bits));
+		return fix32::reinterpret(static_cast<int32_t>(static_cast<uint32_t>(temp >> fractional_bits)));
 	}
 	
 	constexpr friend fix32 operator/ (fix32 lhs, fix32 rhs){
