@@ -4,8 +4,9 @@ FixPoint Library
 ## Overview
 
 This library provides two fixed-point arithmetic types, fix32 and fix64, which are header-only and templated to allow users to specify the number of fractional bits. These types offer a balance between the precision of floating-point numbers and the performance and determinism of integer arithmetic.
-Features
+Features.
 
+* **C++14**: Supported
 * **Fixed-Point Arithmetic**: Perform arithmetic operations with fixed precision.
 * **Templated Fractional Bits**: Specify the number of fractional bits at compile-time for flexibility.
 * **Support for Various Data Types**: Construct fixed-point numbers from integers and floating-point numbers.
