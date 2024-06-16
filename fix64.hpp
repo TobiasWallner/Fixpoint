@@ -210,14 +210,14 @@ public:
 	inline friend int64_t reinterpret_as_int64_t(fix64 f){return f.value;}
 	
 	template<class Stream>
-	friend Stream& operator<<(Stream& stream, fix64 f){
-		if(f < 0){
+	friend Stream& print(Stream& stream, fix64 f, size_t significant_places_after_comma=3) {
+		if (f < 0) {
 			stream << '-';
 			f = -f;
 		}
 		uint64_t digits = f.value >> fractional_bits;
-		uint64_t fractionals = f.value & ((1 << fractional_bits) - 1);
-		
+		uint64_t fractionals = f.value & ((1ULL << fractional_bits) - 1);
+
 		int significant_places = 0;
 		bool count_significant_enable = digits != 0;
 
@@ -225,15 +225,19 @@ public:
 		stream << digits << '.';
 
 		// print fractionals
-		while(fractionals != 0 && significant_places < 3){
+		while (fractionals != 0 && significant_places < significant_places_after_comma) {
 			significant_places += count_significant_enable;
 			fractionals = fractionals * 10;
 			uint64_t n = fractionals >> fractional_bits;
 			count_significant_enable |= n != 0;
-			fractionals = fractionals & ((1 << fractional_bits) - 1);
+			fractionals = fractionals & ((1ULL << fractional_bits) - 1);
 			char c = '0' + static_cast<char>(n);
 			stream << c;
 		}
 		return stream;
 	}
+
+
+	template<class Stream>
+	friend Stream& operator<<(Stream& stream, fix64 f){return print(stream, f);}
 };
