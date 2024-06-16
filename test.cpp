@@ -279,7 +279,28 @@ bool fix64_negative_division(){
 	return (expected - 0.1) <= result && result <= (expected + 0.1);
 }
 
+void example1(){
+	std::cout << "example1:" << std::endl;
+	fix32<8> a = 3.1415926535897932f; // 24 integer bits, 8 fractional bits
+	fix32<8> b = 1.5f;
+	fix32<8> c = a + b;
+	std::cout << "Result: " << c << std::endl; // Output> Result: 4.640
+}
+
+void example2(){
+	std::cout << "example2:" << std::endl;
+	fix64<42> a = 3.1415926535897932;// 16 integer bits, 48 fractional bits 
+	fix64<42> b = 1.5;
+	fix64<42> c = a * b;
+	std::cout << "Result: " << c << std::endl; // Output> Result: 4.742 
+	print(std::cout, c, 8) << std::endl; // 4.74218380
+}
+
 int main(){
+	
+	example1();
+	example2();
+	
 	std::cout << "Fixpoint Tests:" << std::endl;
 	std::cout << "---------------" << std::endl;
 	
