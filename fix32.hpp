@@ -95,7 +95,6 @@ public:
 	template<typename Integer, std::enable_if_t<std::is_integral<Integer>::value, bool> = true>
 	inline friend fix32 operator/ (fix32 lhs, Integer rhs){
 		return fix32::reinterpret(lhs.value / static_cast<int32_t>(rhs));
-		// extra cast because the internal division library has a faulty unsigned division -> only signed
 	}
 
 	inline fix32& operator+= (fix32 rhs){return *this = *this + rhs;}
