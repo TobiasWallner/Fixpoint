@@ -60,6 +60,11 @@ template<typename Integer> friend fix32 operator* (fix32 lhs, Integer rhs);
 template<typename Integer> friend fix32 operator* (Integer lhs, fix32 rhs);
 friend fix32 operator/ (fix32 lhs, fix32 rhs);
 template<typename Integer> friend fix32 operator/ (fix32 lhs, Integer rhs);
+
+fix32& operator+= (fix32 rhs);
+fix32& operator-= (fix32 rhs);
+fix32& operator*= (fix32 rhs);
+fix32& operator/= (fix32 rhs);
 ```
 ### Comparison Operators
 ```CPP
@@ -97,6 +102,11 @@ template<typename Integer> friend fix64 operator* (fix64 lhs, Integer rhs);
 template<typename Integer> friend fix64 operator* (Integer lhs, fix64 rhs);
 friend fix64 operator/ (fix64 lhs, fix64 rhs);
 template<typename Integer> friend fix64 operator/ (fix64 lhs, Integer rhs);
+
+fix64& operator+= (fix64 rhs);
+fix64& operator-= (fix64 rhs);
+fix64& operator*= (fix64 rhs);
+fix64& operator/= (fix64 rhs);
 ```
 ### Comparison Operators
 ```CPP
