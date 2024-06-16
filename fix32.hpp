@@ -149,7 +149,7 @@ public:
 	inline friend int32_t reinterpret_as_int32_t(fix32 f){return f.value;}
 	
 	template<class Stream>
-	friend Stream& operator<<(Stream& stream, fix32 f){
+	friend Stream& print(Stream& stream, fix32 f, size_t significant_places_after_comma=3) {
 		if(f < 0){
 			stream << '-';
 			f = -f;
@@ -164,7 +164,7 @@ public:
 		stream << digits << '.';
 
 		// print fractionals
-		while(fractionals != 0 && significant_places < 3){
+		while(fractionals != 0 && significant_places < significant_places_after_comma){
 			significant_places += count_significant_enable;
 			fractionals = fractionals * 10;
 			uint32_t n = fractionals >> fractional_bits;
@@ -175,4 +175,7 @@ public:
 		}
 		return stream;
 	}
+	
+	template<class Stream>
+	friend Stream& operator<<(Stream& stream, fix32 f){return print(stream, f);}
 };
