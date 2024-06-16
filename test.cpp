@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include "fix32.hpp"
+#include "fix64.hpp"
 
 #define TEST_CASE(function)										\
 	if(function()){ 											\
@@ -17,7 +18,7 @@
 
 bool construct_fixpoint(){
 	volatile fix32<16> a; //default construct
-	volatile auto b = fix32<23>::from(1);
+	volatile auto b = fix32<23>(1);
 	volatile auto c = fix32<28>::reinterpret(2315);
 	volatile fix32<10> d = 5;
 	return true;
@@ -63,7 +64,7 @@ bool conversion(){
 	
 	bool result = true;
 	
-	result &= a == fix32<23>::from(5);
+	result &= a == fix32<23>(5);
 	result &= a != fix32<23>::reinterpret(5);
 	result &= a == fix32<23>::reinterpret(5<<23);
 	
@@ -174,6 +175,46 @@ bool casting_between_formatats(){
 	return first && second;
 }
 
+bool fix64_multiplication(){
+	uint64_t a = 40522;
+	uint64_t b = 30789;
+	
+	fix64<32> fix_a(a);
+	fix64<32> fix_b(b);
+	
+	const auto expected = a*b;
+	const auto result = fix_a * fix_b;
+	
+	return result == expected;
+}
+
+bool fix64_signed_multiplication(){
+	int64_t a = -40522;
+	int64_t b = 30789;
+	
+	fix64<32> fix_a(a);
+	fix64<32> fix_b(b);
+	
+	const auto expected = a*b;
+	const auto result = fix_a * fix_b;
+	
+	return result == expected;
+}
+
+bool fix64_negative_multiplication(){
+	int64_t a = -40522;
+	int64_t b = -30789;
+	
+	fix64<32> fix_a(a);
+	fix64<32> fix_b(b);
+	
+	const auto expected = a*b;
+	const auto result = fix_a * fix_b;
+	
+	return result == expected;
+}
+
+
 int main(){
 	std::cout << "Fixpoint Tests:" << std::endl;
 	std::cout << "---------------" << std::endl;
@@ -197,6 +238,10 @@ int main(){
 	
 	TEST_CASE(conversion_between_formatats);
 	TEST_CASE(casting_between_formatats);
+	
+	TEST_CASE(fix64_multiplication);
+	TEST_CASE(fix64_signed_multiplication);
+	TEST_CASE(fix64_negative_multiplication);
 	
 	
 	return 0;
