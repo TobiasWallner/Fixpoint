@@ -45,9 +45,9 @@ public:
 	template<size_t other_frac_bits>
 	inline fix32(const fix32<other_frac_bits>& other){
 		if (fractional_bits >= other_frac_bits)
-			this->value = other.reinterpret_as_int32_t() << static_cast<size_t>(fractional_bits - other_frac_bits);
+			this->value = (other.reinterpret_as_int32_t() << (static_cast<uint32_t>(fractional_bits - other_frac_bits)));
 		else
-			this->value = other.reinterpret_as_int32_t() >> static_cast<size_t>(other_frac_bits - fractional_bits);
+			this->value = (other.reinterpret_as_int32_t() >> (static_cast<uint32_t>(other_frac_bits - fractional_bits)));
 	}
 	
 	inline fix32& operator= (const fix32&) = default;
