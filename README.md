@@ -18,7 +18,7 @@ To use the fix32 and fix64 types in your project, include the corresponding head
 Example for fix32
 
 ```cpp
-fix32<8> a = 3.1415926535897932f; // 24 integer bits, 8 fractional bits
+fix32<8> a = 3.1415926535897932f;          // 24 integer bits, 8 fractional bits
 fix32<8> b = 1.5f;
 fix32<8> c = a + b;
 std::cout << "Result: " << c << std::endl; // Output> Result: 4.640
@@ -27,11 +27,12 @@ std::cout << "Result: " << c << std::endl; // Output> Result: 4.640
 Example for fix64
 
 ```cpp
-fix64<42> a = 3.1415926535897932;// 16 integer bits, 48 fractional bits 
+fix64<42> a = 3.1415926535897932;          // 16 integer bits, 48 fractional bits 
 fix64<42> b = 1.5;
 fix64<42> c = a * b;
 std::cout << "Result: " << c << std::endl; // Output> Result: 4.742 
-print(std::cout, c, 8) << std::endl; // 4.74218380
+std::cout << "Result: "; 
+print(std::cout, c, 8) << std::endl;       // Output> Result: 4.74218380
 ```
 
 ## API

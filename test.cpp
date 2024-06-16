@@ -281,7 +281,7 @@ bool fix64_negative_division(){
 
 void example1(){
 	std::cout << "example1:" << std::endl;
-	fix32<8> a = 3.1415926535897932f; // 24 integer bits, 8 fractional bits
+	fix32<8> a = 3.1415926535897932f;          // 24 integer bits, 8 fractional bits
 	fix32<8> b = 1.5f;
 	fix32<8> c = a + b;
 	std::cout << "Result: " << c << std::endl; // Output> Result: 4.640
@@ -289,11 +289,12 @@ void example1(){
 
 void example2(){
 	std::cout << "example2:" << std::endl;
-	fix64<42> a = 3.1415926535897932;// 16 integer bits, 48 fractional bits 
+	fix64<42> a = 3.1415926535897932;          // 16 integer bits, 48 fractional bits 
 	fix64<42> b = 1.5;
 	fix64<42> c = a * b;
 	std::cout << "Result: " << c << std::endl; // Output> Result: 4.742 
-	print(std::cout, c, 8) << std::endl; // 4.74218380
+	std::cout << "Result: "; 
+	print(std::cout, c, 8) << std::endl;       // Output> Result: 4.74218380
 }
 
 int main(){
