@@ -49,6 +49,8 @@ fix32(uint32_t number);
 fix32(float num);
 fix32(double num);
 template<size_t other_frac_bits> fix32(const fix32<other_frac_bits>& other);
+
+static fix32 reinterpret(int32_t number);
 ```
 ### Arithmetic Operators
 ```CPP
@@ -91,6 +93,8 @@ fix64(uint64_t number);
 fix64(float num);
 fix64(double num);
 template<size_t other_frac_bits> fix64(const fix64<other_frac_bits>& other);
+
+static fix32 reinterpret(int64_t number);
 ```
 ### Arithmetic Operators
 ```CPP
