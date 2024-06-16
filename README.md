@@ -75,7 +75,7 @@ friend bool operator>= (fix32 lhs, fix32 rhs);
 friend Stream& print(Stream& stream, fix32 f, size_t significant_places_after_comma=3);
 template<class Stream> friend Stream& operator<<(Stream& stream, fix32 f);
 ```
-##fix64 Class
+## fix64 Class
 
 ### Constructors
 ```CPP
