@@ -117,14 +117,45 @@ public:
 	}
 
 	inline friend fix64 operator/ (fix64 lhs, fix64 rhs){
-		int64_t temp = (static_cast<int64_t>(lhs.value) << fractional_bits) / static_cast<int64_t>(rhs.value);
-		return fix64::reinterpret(static_cast<int64_t>(temp));
+		bool sign_lhs = lhs < 0;
+		bool sign_rhs = rhs < 0;
+		
+		lhs = sign_lhs ? -lhs : lhs;
+		rhs = sign_rhs ? -rhs : rhs;
+		
+		const uint64_t lower = static_cast<uint64_t>(lhs.value) << fractional_bits;
+		const uint64_t upper = static_cast<uint64_t>(lhs.value) >> (64-fractional_bits);  
+		
+		const uint64_t a = upper >> 32;
+		const uint64_t b = upper & ((1ULL<<32)-1);
+		const uint64_t c = lower >> 32;
+		const uint64_t d = lower & ((1ULL<<32)-1);
+		
+		const uint64_t div1 = a / rhs.value;
+		const uint64_t rest1 = a % rhs.value;
+		
+		const uint64_t val2 = (rest1 << 32) | b;
+		const uint64_t div2 = val2 / rhs.value;
+		const uint64_t rest2 = val2 % rhs.value;
+		
+		const uint64_t val3 = (rest2 << 32) | c;
+		const uint64_t div3 = val3 / rhs.value;
+		const uint64_t rest3 = val3 % rhs.value;
+		
+		const uint64_t val4 = (rest3 << 32) | c;
+		const uint64_t div4 = val4 / rhs.value;
+		
+		const uint64_t result_val_ = div4 + (div3 << 32); // + (div2 << 64) + (div1 << 96)
+		
+		const uint64_t result_val = (sign_lhs != sign_rhs) ? -result_val_ : result_val_;
+		
+		const fix64 result = fix64::reinterpret(result_val);
+		return result;
 	}
 	
 	template<typename Integer, std::enable_if_t<std::is_integral<Integer>::value, bool> = true>
 	inline friend fix64 operator/ (fix64 lhs, Integer rhs){
 		return fix64::reinterpret(lhs.value / static_cast<int64_t>(rhs));
-		// extra cast because the internal division library has a faulty unsigned division -> only signed
 	}
 
 	inline fix64& operator+= (fix64 rhs){return *this = *this + rhs;}
@@ -186,7 +217,7 @@ public:
 		}
 		uint64_t digits = f.value >> fractional_bits;
 		uint64_t fractionals = f.value & ((1 << fractional_bits) - 1);
-
+		
 		int significant_places = 0;
 		bool count_significant_enable = digits != 0;
 

@@ -201,6 +201,19 @@ bool fix64_signed_multiplication(){
 	return result == expected;
 }
 
+bool fix64_signed_multiplication2(){
+	int64_t a = 40522;
+	int64_t b = -30789;
+	
+	fix64<32> fix_a(a);
+	fix64<32> fix_b(b);
+	
+	const auto expected = a*b;
+	const auto result = fix_a * fix_b;
+	
+	return result == expected;
+}
+
 bool fix64_negative_multiplication(){
 	int64_t a = -40522;
 	int64_t b = -30789;
@@ -214,6 +227,57 @@ bool fix64_negative_multiplication(){
 	return result == expected;
 }
 
+bool fix64_division(){
+	double a = 40522.562;
+	double b = 20209.48;
+	
+	fix64<32> fix_a(a);
+	fix64<32> fix_b(b);
+	
+	const auto expected = a / b;
+	const auto result = fix_a / fix_b;
+	
+	return (expected - 0.1) <= result && result <= (expected + 0.1);
+}
+
+bool fix64_signed_division(){
+	double a = 40522.562;
+	double b = -20209.48;
+	
+	fix64<32> fix_a(a);
+	fix64<32> fix_b(b);
+	
+	const auto expected = a / b;
+	const auto result = fix_a / fix_b;
+	
+	return (expected - 0.1) <= result && result <= (expected + 0.1);
+}
+
+bool fix64_signed_division2(){
+	double a = 40522.562;
+	double b = -20209.48;
+	
+	fix64<32> fix_a(a);
+	fix64<32> fix_b(b);
+	
+	const auto expected = a / b;
+	const auto result = fix_a / fix_b;
+	
+	return (expected - 0.1) <= result && result <= (expected + 0.1);
+}
+
+bool fix64_negative_division(){
+	double a = -40522.562;
+	double b = -20209.48;
+	
+	fix64<32> fix_a(a);
+	fix64<32> fix_b(b);
+	
+	const auto expected = a / b;
+	const auto result = fix_a / fix_b;
+	
+	return (expected - 0.1) <= result && result <= (expected + 0.1);
+}
 
 int main(){
 	std::cout << "Fixpoint Tests:" << std::endl;
@@ -242,6 +306,12 @@ int main(){
 	TEST_CASE(fix64_multiplication);
 	TEST_CASE(fix64_signed_multiplication);
 	TEST_CASE(fix64_negative_multiplication);
+	TEST_CASE(fix64_signed_multiplication2);
+	
+	TEST_CASE(fix64_division);
+	TEST_CASE(fix64_signed_division);
+	TEST_CASE(fix64_signed_division2);
+	TEST_CASE(fix64_negative_division);
 	
 	
 	return 0;
