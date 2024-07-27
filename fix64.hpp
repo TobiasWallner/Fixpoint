@@ -110,7 +110,8 @@ public:
 					break;
 				}
 				++str;
-				s *= radix;
+				size_t new_s = s * radix;
+				s = (new_s > s) ? new_s : 0; //overflow protection
 			}
 
 			// shift fractions to the correct binary point
@@ -381,7 +382,8 @@ public:
 					break;
 				}
 				stream.get();
-				s *= radix;
+				size_t new_s = s * radix;
+				s = (new_s > s) ? new_s : 0; //overflow protection
 			}
 
 			// shift fractions to the correct binary point
