@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My C++ Library Documentation</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="toggle-sidebar">-</div>
+    <object id="sidebar-object" data="sidebar.html" type="text/html" style="width: 250px; height: 100%; border: none;"></object>
+    <div id="container">
+        <div id="content">
+            <h1>Fixpoint</h1>
+            <p>Version: 1.0.0</p>
+
+            <h2 id="installation">Installation</h2>
+            <p>Instructions on how to install the library.</p>
+            <h2 id="quickstart">Quick Start</h2>
+            <p>Basic examples to get started with the library.</p>
+            <h2 id="usage">Usage</h2>
+            <p>Detailed usage instructions and guidelines.</p>
+            <h2 id="examples">Examples</h2>
+            <p>Code examples demonstrating the features of the library.</p>
+			<h2 id="classes">API References</h2>
+            <h3 id="classes">Classes</h3>
+            <a href="fix32.html">fix32</a>
+			<a href="fix64.html">fix64</a>
+			
+			<h3 id="functions">Functions</h3>
+            <p>List of all functions available in the library.</p>
+        </div>
+    </div>
+    <script>
+        const toggleButton = document.getElementById('toggle-sidebar');
+        const sidebarObject = document.getElementById('sidebar-object');
+		const sidebar = document.getElementById('sidebar');
+
+        toggleButton.addEventListener('click', () => {
+            const isCollapsed = sidebarObject.style.width === '60px' || sidebarObject.style.width === '';
+
+            if (isCollapsed) {
+                sidebarObject.style.width = '250px';
+                toggleButton.textContent = '-';
+                toggleButton.classList.remove('collapsed');
+				sidebar.remove('collapsed');
+            } else {
+                sidebarObject.style.width = '60px';
+                toggleButton.textContent = '+';
+                toggleButton.classList.add('collapsed');
+				sidebar.add('collapsed');
+            }
+        });
+    </script>
+</body>
+</html>

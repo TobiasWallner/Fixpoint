@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My C++ Library Documentation</title>
+    <link rel="stylesheet" href="styles.css">
+	<link rel="stylesheet" href="prism.css">
+</head>
+<body>
+    <div id="toggle-sidebar">-</div>
+    <object id="sidebar-object" data="sidebar.html" type="text/html" style="width: 250px; height: 100%; border: none;"></object>
+    <div id="container">
+        <div id="content">
+            <h1>fix32<N></h1>
+			<p>Defined in header &lt;fix32.hpp=16&gt;</p>
+			
+			<pre><code class="language-cpp">template&lt;size_t fractional_bits=16&gt; class fix32;</code></pre>
+			
+            <p>
+				fix32 is a signed fixpoint integer with 32-bit and a templated number of user defineable fractional
+				bits.
+			</p>
+			<p>
+				<b>Note</b> that the default number of fractional bits is 16.
+			</p>
+			
+			<h2> Member Functions </h2>
+			<table>
+				<tr><td class="first-column">constructor</td><td class="second-column">constructs a new fix32</td></tr>
+				<tr><td class="first-column">operator=</td><td class="second-column">assignment operator</td></tr>
+			</table>
+			
+			<h2> Non Member Functions </h2>
+			<h3> Relational Operators </h3>
+			<table>
+				<tr><td class="first-column">operator==</td><td class="second-column"> ... </td></tr>
+				<tr><td class="first-column">operator!=</td><td class="second-column"> ... </td></tr>
+				<tr><td class="first-column">operator&lt;</td><td class="second-column"> ... </td></tr>
+				<tr><td class="first-column">operator&lt;=</td><td class="second-column"> ... </td></tr>
+				<tr><td class="first-column">operator&gt;</td><td class="second-column"> ... </td></tr>
+				<tr><td class="first-column">operator&gt;=</td><td class="second-column"> ... </td></tr>
+			</table>
+			
+			<h3> Arithmetic Operators </h3>
+			<table>
+				<tr><td class="first-column">operator+</td><td class="second-column"> ... </td></tr>
+				<tr><td class="first-column">operator-</td><td class="second-column"> ... </td></tr>
+				<tr><td class="first-column">operator*</td><td class="second-column"> ... </td></tr>
+				<tr><td class="first-column">operator/</td><td class="second-column"> ... </td></tr>
+				<tr><td class="first-column">operator%</td><td class="second-column"> ... </td></tr>
+			</table>
+			
+			<h3> I/O - Printing - Streaming </h3>
+			<table>
+				<tr><td class="first-column">operator&lt;&lt;</td><td class="second-column"> ... </td></tr>
+			</table>
+			
+        </div>
+    </div>
+	<script src="prism.js"></script>
+
+    <script>
+        const toggleButton = document.getElementById('toggle-sidebar');
+        const sidebarObject = document.getElementById('sidebar-object');
+		const sidebar = document.getElementById('sidebar');
+
+        toggleButton.addEventListener('click', () => {
+            const isCollapsed = sidebarObject.style.width === '60px' || sidebarObject.style.width === '';
+
+            if (isCollapsed) {
+                sidebarObject.style.width = '250px';
+                toggleButton.textContent = '-';
+                toggleButton.classList.remove('collapsed');
+				sidebar.remove('collapsed');
+            } else {
+                sidebarObject.style.width = '60px';
+                toggleButton.textContent = '+';
+                toggleButton.classList.add('collapsed');
+				sidebar.add('collapsed');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sidebar</title>
+    <link rel="stylesheet" href="styles.css"> <!-- Link to the same stylesheet -->
+</head>
+<body>
+	<div id="sidebar">
+		<h2>Menu</h2>
+		<a id="sidebar-button" target="parent" href="index.html">Home</a>
+		<div class="menu-section">
+			<p class="menu-header">Getting Started</p>
+			<div class="menu-links">
+				<a target="parent" href="index.html#installation">Installation</a>
+				<a target="parent" href="index.html#quickstart">Quick Start</a>
+				<a target="parent" href="index.html#usage">Usage</a>
+				<a target="parent" href="index.html#examples">Examples</a>
+			</div>
+		</div>
+		<div class="menu-section">
+			<p class="menu-header">API Reference</p>
+			<div class="menu-links">
+				<a  target="parent" href="fix32.html">fix32</a>				
+				<a  target="parent" href="fix64.html">fix64</a>
+			</div>
+		</div>
+	</div>
+    <script>
+        // Toggle menu sections
+        document.querySelectorAll('.menu-header').forEach(header => {
+            header.addEventListener('click', () => {
+                header.classList.toggle('active');
+                const menuLinks = header.nextElementSibling;
+                menuLinks.style.display = (header.classList.contains('active')) ? 'block' : 'none';
+            });
+        });
+    </script>
+</body>
+</html>
