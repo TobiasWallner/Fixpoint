@@ -17,22 +17,27 @@ private:
 	int64_t value;
 	
 public:
-	inline fix64() = default;
-	inline fix64(const fix64&) = default;
-	inline fix64(int64_t number) : value(number << fractional_bits){}
-	inline fix64(uint64_t number) : fix64(static_cast<int64_t>(number)){}
+	class ReinterpretToken{};
+
+	constexpr fix64() = default;
+	constexpr fix64(const fix64&) = default;
+	constexpr fix64(int64_t number) : value(number << fractional_bits){}
+	constexpr fix64(int64_t number, ReinterpretToken t) : value(number){}
 	
 	template<typename Integer, std::enable_if_t<std::is_integral<Integer>::value, bool> = true>
 	fix64(Integer number) : fix64(static_cast<int64_t>(number)){}
+	
+	template<typename Integer, std::enable_if_t<std::is_integral<Integer>::value, bool> = true>
+	fix64(Integer number, ReinterpretToken t) : fix64(static_cast<int64_t>(number), t){}
 
 	inline fix64(float num) {
 		if (num != 0.f) {
-			const int64_t inum = *reinterpret_cast<const uint64_t*>(&num);
-			const int64_t float_mantissa = (inum & 0x07FFFFF) | 0x0800000;
-			const int64_t float_exponent = ((inum & 0x7F800000) >> 23) - 127;
-			const bool float_sign = (*reinterpret_cast<int64_t*>(&num) & 0x80000000) != 0;
-			const int64_t shifts = fractional_bits - 23 + float_exponent;
-			const int64_t abs_value = (shifts >= 0) ? float_mantissa << shifts : float_mantissa >> -shifts;
+			const uint32_t inum = *reinterpret_cast<const uint32_t*>(&num);
+			const uint32_t float_mantissa = (inum & ((1 << 23) - 1)) | (1 << 23);
+			const uint32_t float_exponent = ((inum & (((1 << 8) - 1) << 23)) >> 23) - 127;
+			const bool float_sign = (inum & (1 << 31)) != 0;
+			const int shifts = (static_cast<int>(fractional_bits) + static_cast<int>(float_exponent)) - static_cast<int>(23);
+			const uint64_t abs_value = (shifts >= 0) ? static_cast<uint64_t>(float_mantissa) << shifts : static_cast<uint64_t>(float_mantissa) >> -shifts;
 			this->value = (float_sign) ? -abs_value : abs_value;
 		}
 		else {
@@ -42,8 +47,87 @@ public:
 	
 	inline fix64(double num) : fix64(static_cast<float>(num)){}
 	
+	constexpr fix64(const char* str, int radix = 10) : value(0) {
+		bool sign = false;
+		uint64_t digits = 0;
+		uint64_t fractions = 0;
+		char const * const str_first = str;
+		
+		// parse sign
+		if (*str == '-') {
+			sign = true;
+			++str;
+		}
+
+		//select radix
+		if (*str == '0') {
+			++str;
+			switch (*str) {
+				case 'b': {++str; radix = 2; } break;
+				case 'o': {++str; radix = 8; } break;
+				case 'd': {++str; radix = 10; } break;
+				case 'x': case 'X': {++str; radix = 16; } break;
+				default: break;
+			}
+		}
+
+		// select ranges
+		char digit_first = '0';
+		char digit_last = '0' + ((radix <= 10) ? (radix) : 10);
+		char alpha_first = 'a';
+		char alpha_last = 'a' + ((radix > 10) ? radix - 10 : 0);
+		char ALPHA_first = 'A';
+		char ALPHA_last = 'A' + ((radix > 10) ? radix - 10 : 0);
+
+
+		// parse digits
+		while (true) {
+			if (digit_first <= *str && *str <= digit_last) {
+				digits = digits * radix + (*str - digit_first);
+			}else if (alpha_first <= *str && *str <= alpha_last) {
+				digits = digits * radix + (*str - alpha_first + 10);
+			}else if (ALPHA_first <= *str && *str <= ALPHA_first) {
+				digits = digits * radix + (*str - ALPHA_first + 10);
+			}else {
+				break;
+			}
+			++str;
+		}
+		digits <<= fractional_bits;
+
+		// parse fractions
+		if (*str == '.') {
+			++str;
+			size_t s = radix;
+			while (true) {
+				if (digit_first <= *str && *str <= digit_last) {
+					fractions = fractions + ((static_cast<uint64_t>(*str) - static_cast<uint64_t>(digit_first)) << 60) / s;
+				}else if (alpha_first <= *str && *str <= alpha_last) {
+					fractions = fractions + ((static_cast<uint64_t>(*str) - static_cast<uint64_t>(alpha_first) + 10) << 60) / s;
+				}else if (ALPHA_first <= *str && *str <= ALPHA_first) {
+					fractions = fractions + ((static_cast<uint64_t>(*str) - static_cast<uint64_t>(ALPHA_first) + 10) << 60) / s;
+				}else {
+					break;
+				}
+				++str;
+				s *= radix;
+			}
+
+			// shift fractions to the correct binary point
+			int shifts = static_cast<int>(60) - static_cast<int>(fractional_bits);
+			fractions = (shifts >= 0) ? fractions >> shifts : fractions << -shifts;
+		}
+
+		const uint64_t abs_value = digits | fractions;
+		this->value = sign ? (-static_cast<int64_t>(abs_value)) : static_cast<int64_t>(abs_value);
+	}
+
+	inline fix64& assign(const char* str, int radix = 10) {
+		return *this = fix64<fractional_bits>(str, radix);
+	}
+	
 	template<size_t other_frac_bits>
-	inline fix64(const fix64<other_frac_bits>& other){
+	constexpr fix64(const fix64<other_frac_bits>& other){
 		if (fractional_bits >= other_frac_bits)
 			this->value = other.reinterpret_as_int64_t() << static_cast<uint32_t>(fractional_bits - other_frac_bits);
 		else
@@ -54,25 +138,25 @@ public:
 	
 	// Arithmetic operators
 	
-	inline friend fix64 operator+ (fix64 lhs, fix64 rhs){
+	constexpr friend fix64 operator+ (fix64 lhs, fix64 rhs){
 		fix64 result;
 		result.value = lhs.value + rhs.value;
 		return result;
 	}
 	
-	inline friend fix64 operator- (fix64 a){
+	constexpr friend fix64 operator- (fix64 a){
 		fix64 result;
 		result.value = -a.value;
 		return result;
 	}
 	
-	inline friend fix64 operator- (fix64 lhs, fix64 rhs){
+	constexpr friend fix64 operator- (fix64 lhs, fix64 rhs){
 		fix64 result;
 		result.value = lhs.value - rhs.value;
 		return result;
 	}
 	
-	inline friend fix64 operator* (fix64 lhs, fix64 rhs){
+	constexpr friend fix64 operator* (fix64 lhs, fix64 rhs){
 		/*
 			Perform the following multiplication:
 				(a * 2^32 + b) * (c * 2^32 + d)
@@ -91,7 +175,7 @@ public:
 		const uint64_t ad_bc = bc + ad;
 		const bool ad_bc_carrie = (ad_bc < bc || ad_bc < ad);
 		
-		const uint64_t ad_bc_upper = (ad_bc_upper >> 32) & ((1ULL<<32)-1) | (ad_bc_carrie ? (1ULL << 32) : (0ULL));
+		const uint64_t ad_bc_upper = (ad_bc >> 32) & ((1ULL<<32)-1) | (ad_bc_carrie ? (1ULL << 32) : (0ULL));
 		const uint64_t ad_bc_lower = ad_bc & ((1ULL<<32)-1);
 		
 		const uint64_t ad_bc_lower_shifted = (ad_bc_lower << 32);
@@ -102,21 +186,21 @@ public:
 		
 		const uint64_t result_value = (result_upper << (64 - fractional_bits)) | (result_lower >> fractional_bits);
 		
-		fix64 result = fix64::reinterpret(result_value);
+		const fix64 result = fix64::reinterpret(result_value);
 		return result;
 	}
 	
 	template<typename Integer, std::enable_if_t<std::is_integral<Integer>::value, bool> = true>
-	inline friend fix64 operator* (fix64 lhs, Integer rhs){
+	constexpr friend fix64 operator* (fix64 lhs, Integer rhs){
 		return fix64::reinterpret(lhs.value * static_cast<int64_t>(rhs));
 	}
 
 	template<typename Integer, std::enable_if_t<std::is_integral<Integer>::value, bool> = true>
-	inline friend fix64 operator* (Integer lhs, fix64 rhs){
+	constexpr friend fix64 operator* (Integer lhs, fix64 rhs){
 		return fix64::reinterpret(lhs * rhs.value);
 	}
 
-	inline friend fix64 operator/ (fix64 lhs, fix64 rhs){
+	constexpr friend fix64 operator/ (fix64 lhs, fix64 rhs){
 		bool sign_lhs = lhs < 0;
 		bool sign_rhs = rhs < 0;
 		
@@ -154,7 +238,7 @@ public:
 	}
 	
 	template<typename Integer, std::enable_if_t<std::is_integral<Integer>::value, bool> = true>
-	inline friend fix64 operator/ (fix64 lhs, Integer rhs){
+	constexpr friend fix64 operator/ (fix64 lhs, Integer rhs){
 		return fix64::reinterpret(lhs.value / static_cast<int64_t>(rhs));
 	}
 
@@ -170,47 +254,39 @@ public:
 	inline fix64& operator/= (Integer rhs){return this->value = this->value / static_cast<int64_t>(rhs);}
 
 	// Comparison operators
-	inline friend bool operator== (fix64 lhs, fix64 rhs){return lhs.value == rhs.value;}
-	inline friend bool operator!= (fix64 lhs, fix64 rhs){return lhs.value != rhs.value;}
-	inline friend bool operator< (fix64 lhs, fix64 rhs){return lhs.value < rhs.value;}
-	inline friend bool operator> (fix64 lhs, fix64 rhs){return lhs.value > rhs.value;}
-	inline friend bool operator<= (fix64 lhs, fix64 rhs){return lhs.value <= rhs.value;}
-	inline friend bool operator>= (fix64 lhs, fix64 rhs){return lhs.value >= rhs.value;}
+	constexpr friend bool operator== (fix64 lhs, fix64 rhs){return lhs.value == rhs.value;}
+	constexpr friend bool operator!= (fix64 lhs, fix64 rhs){return lhs.value != rhs.value;}
+	constexpr friend bool operator< (fix64 lhs, fix64 rhs){return lhs.value < rhs.value;}
+	constexpr friend bool operator> (fix64 lhs, fix64 rhs){return lhs.value > rhs.value;}
+	constexpr friend bool operator<= (fix64 lhs, fix64 rhs){return lhs.value <= rhs.value;}
+	constexpr friend bool operator>= (fix64 lhs, fix64 rhs){return lhs.value >= rhs.value;}
 	
-	static inline fix64 reinterpret(int64_t number){
-		fix64 result;
-		result.value = number;
-		return result;
-	}
+	static constexpr fix64 reinterpret(int64_t number){return fix64(number, ReinterpretToken());}
 	
 	template<size_t other_frac_bits>
-	explicit inline operator fix64<other_frac_bits> () {return fix64<other_frac_bits>(*this);}
+	explicit constexpr operator fix64<other_frac_bits> () const {return fix64<other_frac_bits>(*this);}
 	
-	explicit inline operator int64_t (){return this->value >> fractional_bits;}
-	explicit inline operator uint64_t (){return static_cast<uint64_t>(this->value >> fractional_bits);}
+	explicit constexpr operator int64_t () const {return this->value >> fractional_bits;}
+	explicit constexpr operator uint64_t () const {return static_cast<uint64_t>(this->value >> fractional_bits);}
 	
-	explicit inline operator float (){
-		 static float fnorm = 1.f / static_cast<float>(1 << fractional_bits);
-		float fval = static_cast<float>(this->value);
-		float result = fval * fnorm;
+	explicit constexpr operator float () const {
+		float result = static_cast<float>(this->value) / (1 << fractional_bits);
 		return result;
 	}
 	
-	explicit inline operator double (){
-		 static double fnorm = 1.f / static_cast<double>(1 << fractional_bits);
-		double fval = static_cast<double>(this->value);
-		double result = fval * fnorm;
+	explicit constexpr operator double () const {
+		double result = static_cast<double>(this->value) / (1 << fractional_bits);
 		return result;
 	}
 	
-	inline int64_t static_cast_to_int64_t() const {return this->value >> fractional_bits;}
-	inline int64_t reinterpret_as_int64_t() const {return this->value;}
+	constexpr int64_t static_cast_to_int64_t() const {return this->value >> fractional_bits;}
+	constexpr int64_t reinterpret_as_int64_t() const {return this->value;}
 	
-	inline friend int64_t static_cast_to_int64_t(fix64 f){return f.value >> fractional_bits;}
-	inline friend int64_t reinterpret_as_int64_t(fix64 f){return f.value;}
+	constexpr friend int64_t static_cast_to_int64_t(fix64 f){return f.value >> fractional_bits;}
+	constexpr friend int64_t reinterpret_as_int64_t(fix64 f){return f.value;}
 	
 	template<class Stream>
-	friend Stream& print(Stream& stream, fix64 f, size_t significant_places_after_comma=3) {
+	friend Stream& print(Stream& stream, fix64<fractional_bits> f, size_t significant_places_after_comma=3) {
 		if (f < 0) {
 			stream << '-';
 			f = -f;
@@ -239,5 +315,84 @@ public:
 
 
 	template<class Stream>
-	friend Stream& operator<<(Stream& stream, fix64 f){return print(stream, f);}
+	friend inline Stream& operator<<(Stream& stream, fix64 f){return print(stream, f);}
+
+	template<class Stream>
+	friend Stream& operator>>(Stream& stream, fix64& f){
+		bool sign = false;
+		uint64_t digits = 0;
+		uint64_t fractions = 0;
+		int radix = 10;
+		
+		// parse sign
+		if (stream.peek() == '-') {
+			sign = true;
+			stream.get();
+		}
+
+		//select radix
+		if (stream.peek() == '0') {
+			stream.get();
+			switch (stream.peek()) {
+				case 'b': {stream.get(); radix = 2; } break;
+				case 'o': {stream.get(); radix = 8; } break;
+				case 'd': {stream.get(); radix = 10; } break;
+				case 'x': case 'X': {stream.get(); radix = 16; } break;
+				default: break;
+			}
+		}
+
+		// select ranges
+		char digit_first = '0';
+		char digit_last = '0' + ((radix <= 10) ? (radix) : 10);
+		char alpha_first = 'a';
+		char alpha_last = 'a' + ((radix > 10) ? radix - 10 : 0);
+		char ALPHA_first = 'A';
+		char ALPHA_last = 'A' + ((radix > 10) ? radix - 10 : 0);
+
+
+		// parse digits
+		while (true) {
+			if (digit_first <= stream.peek() && stream.peek() <= digit_last) {
+				digits = digits * radix + (stream.peek() - digit_first);
+			}else if (alpha_first <= stream.peek() && stream.peek() <= alpha_last) {
+				digits = digits * radix + (stream.peek() - alpha_first + 10);
+			}else if (ALPHA_first <= stream.peek() && stream.peek() <= ALPHA_first) {
+				digits = digits * radix + (stream.peek() - ALPHA_first + 10);
+			}else {
+				break;
+			}
+			stream.get();
+		}
+		digits <<= fractional_bits;
+
+		// parse fractions
+		if (stream.peek() == '.') {
+			stream.get();
+			size_t s = radix;
+			while (true) {
+				if (digit_first <= stream.peek() && stream.peek() <= digit_last) {
+					fractions = fractions + ((static_cast<uint64_t>(stream.peek()) - static_cast<uint64_t>(digit_first)) << 60) / s;
+				}else if (alpha_first <= stream.peek() && stream.peek() <= alpha_last) {
+					fractions = fractions + ((static_cast<uint64_t>(stream.peek()) - static_cast<uint64_t>(alpha_first) + 10) << 60) / s;
+				}else if (ALPHA_first <= stream.peek() && stream.peek() <= ALPHA_first) {
+					fractions = fractions + ((static_cast<uint64_t>(stream.peek()) - static_cast<uint64_t>(ALPHA_first) + 10) << 60) / s;
+				}else {
+					break;
+				}
+				stream.get();
+				s *= radix;
+			}
+
+			// shift fractions to the correct binary point
+			int shifts = static_cast<int>(60) - static_cast<int>(fractional_bits);
+			fractions = (shifts >= 0) ? fractions >> shifts : fractions << -shifts;
+		}
+
+		const uint64_t abs_value = digits | fractions;
+		const int64_t value = sign ? (-static_cast<int64_t>(abs_value)) : static_cast<int64_t>(abs_value);
+		
+		f = fix64::reinterpret(value);
+		return stream;
+	}
 };

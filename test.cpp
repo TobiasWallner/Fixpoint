@@ -8,6 +8,7 @@
 #include <iostream>
 #include "fix32.hpp"
 #include "fix64.hpp"
+//#include "fixmath.hpp"
 
 #define TEST_CASE(function)										\
 	if(function()){ 											\
@@ -15,6 +16,8 @@
 	}else{ 														\
 		std::cout << "[Failed] - " << #function << std::endl;	\
 	}
+
+// ------- fix32 -------
 
 bool construct_fixpoint(){
 	volatile fix32<16> a; //default construct
@@ -175,16 +178,47 @@ bool casting_between_formatats(){
 	return first && second;
 }
 
+bool construct_from_string(){
+	constexpr fix32<10> a("3.14159265");
+	fix32<10> a_lower(3.140);
+	fix32<10> a_upper(3.142);
+	return a_lower < a && a < a_upper;
+}
+
+bool construct_from_signed_string() {
+	constexpr fix32<20> b("-3.14159265");
+	fix32<20> b_lower(-3.142);
+	fix32<20> b_upper(-3.140);
+	return b_lower < b && b < b_upper;
+}
+
+bool construct_from_binary_string() {
+	constexpr int32_t iexpected = (0b10101010) << (16-4);
+	constexpr fix32<16> expected = fix32<16>::reinterpret(iexpected);
+	
+	constexpr fix32<16> value1("0b1010.1010");
+	constexpr fix32<16> value2("1010.1010", 2);
+	constexpr fix32<16> value3("0b1010.1010", 2);
+	
+	bool test1 = value1 == expected;
+	bool test2 = value2 == expected;
+	bool test3 = value3 == expected;
+	
+	return test1 && test2 && test3;
+}
+
+// ------------------- fix64 -----------------------
+
 bool fix64_multiplication(){
-	uint64_t a = 40522;
-	uint64_t b = 30789;
+	uint32_t a = 40522;
+	uint32_t b = 30789;
 	
 	fix64<32> fix_a(a);
 	fix64<32> fix_b(b);
 	
 	const auto expected = a*b;
 	const auto result = fix_a * fix_b;
-	
+
 	return result == expected;
 }
 
@@ -236,7 +270,7 @@ bool fix64_division(){
 	
 	const auto expected = a / b;
 	const auto result = fix_a / fix_b;
-	
+
 	return (expected - 0.1) <= result && result <= (expected + 0.1);
 }
 
@@ -279,6 +313,23 @@ bool fix64_negative_division(){
 	return (expected - 0.1) <= result && result <= (expected + 0.1);
 }
 
+bool fix64_construct_from_string() {
+	fix64<20> a("3.14159265");
+	fix64<20> a_lower(3.140);
+	fix64<20> a_upper(3.142);
+	return a_lower < a && a < a_upper;
+}
+
+bool fix64_construct_from_signed_string() {
+	constexpr fix64<40> b("-3.14159265");
+	fix64<40> b_lower(-3.142);
+	fix64<40> b_upper(-3.140);
+	return b_lower < b && b < b_upper;
+}
+
+
+// ------- examples -------
+
 void example1(){
 	std::cout << "example1:" << std::endl;
 	fix32<8> a = 3.1415926535897932f;          // 24 integer bits, 8 fractional bits
@@ -297,6 +348,15 @@ void example2(){
 	print(std::cout, c, 8) << std::endl;       // Output> Result: 4.74218380
 }
 
+// ------- fixmath -------
+/*
+bool test_abs(){
+	fix32<16> a(5);
+	fix32<16> b(-5);
+	return a != b && a == abs(b) && abs(a) == abs(b);
+}
+*/
+
 int main(){
 	
 	example1();
@@ -306,6 +366,8 @@ int main(){
 	std::cout << "---------------" << std::endl;
 	
 	std::cout << "float test: " << (fix32<20>(420)/fix32<20>(507)) << std::endl;
+	
+	// ------- fix32 -------
 	
 	TEST_CASE(construct_fixpoint);
 	
@@ -325,6 +387,13 @@ int main(){
 	TEST_CASE(conversion_between_formatats);
 	TEST_CASE(casting_between_formatats);
 	
+	TEST_CASE(construct_from_string);
+	TEST_CASE(construct_from_signed_string);
+	
+	TEST_CASE(construct_from_binary_string);
+	
+	// ------- fix64 -------
+	
 	TEST_CASE(fix64_multiplication);
 	TEST_CASE(fix64_signed_multiplication);
 	TEST_CASE(fix64_negative_multiplication);
@@ -334,7 +403,13 @@ int main(){
 	TEST_CASE(fix64_signed_division);
 	TEST_CASE(fix64_signed_division2);
 	TEST_CASE(fix64_negative_division);
+
+	TEST_CASE(fix64_construct_from_string) // TODO: fix failing test
+	TEST_CASE(fix64_construct_from_signed_string) // TODO: fix failing test
 	
+	// ------- fixmath -------
+	
+	//TEST_CASE(test_abs)
 	
 	return 0;
 }
