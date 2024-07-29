@@ -87,7 +87,7 @@ public:
 				digits = digits * radix + (*str - digit_first);
 			}else if (alpha_first <= *str && *str <= alpha_last) {
 				digits = digits * radix + (*str - alpha_first + 10);
-			}else if (ALPHA_first <= *str && *str <= ALPHA_first) {
+			}else if (ALPHA_first <= *str && *str <= ALPHA_last) {
 				digits = digits * radix + (*str - ALPHA_first + 10);
 			}else {
 				break;
@@ -105,7 +105,7 @@ public:
 					fractions = fractions + ((static_cast<uint32_t>(*str) - static_cast<uint32_t>(digit_first)) << 28) / s;
 				}else if (alpha_first <= *str && *str <= alpha_last) {
 					fractions = fractions + ((static_cast<uint32_t>(*str) - static_cast<uint32_t>(alpha_first) + 10) << 28) / s;
-				}else if (ALPHA_first <= *str && *str <= ALPHA_first) {
+				}else if (ALPHA_first <= *str && *str <= ALPHA_last) {
 					fractions = fractions + ((static_cast<uint32_t>(*str) - static_cast<uint32_t>(ALPHA_first) + 10) << 28) / s;
 				}else {
 					break;
@@ -119,9 +119,11 @@ public:
 			int shifts = static_cast<int>(28) - static_cast<int>(fractional_bits);
 			fractions = (shifts >= 0) ? fractions >> shifts : fractions << -shifts;
 		}
-
+		
 		const uint32_t abs_value = digits | fractions;
-		this->value = sign ? (-static_cast<int32_t>(abs_value)) : static_cast<int32_t>(abs_value);
+		const int32_t result = sign ? (-static_cast<int32_t>(abs_value)) : static_cast<int32_t>(abs_value);
+		
+		this->value = result;
 	}
 
 	fix32& assign(const char* str, int radix=10) {
@@ -302,7 +304,7 @@ public:
 				digits = digits * radix + (stream.peek() - digit_first);
 			}else if (alpha_first <= stream.peek() && stream.peek() <= alpha_last) {
 				digits = digits * radix + (stream.peek() - alpha_first + 10);
-			}else if (ALPHA_first <= stream.peek() && stream.peek() <= ALPHA_first) {
+			}else if (ALPHA_first <= stream.peek() && stream.peek() <= ALPHA_last) {
 				digits = digits * radix + (stream.peek() - ALPHA_first + 10);
 			}else {
 				break;
@@ -320,7 +322,7 @@ public:
 					fractions = fractions + ((static_cast<uint32_t>(stream.peek()) - static_cast<uint32_t>(digit_first)) << 28) / s;
 				}else if (alpha_first <= stream.peek() && stream.peek() <= alpha_last) {
 					fractions = fractions + ((static_cast<uint32_t>(stream.peek()) - static_cast<uint32_t>(alpha_first) + 10) << 28) / s;
-				}else if (ALPHA_first <= stream.peek() && stream.peek() <= ALPHA_first) {
+				}else if (ALPHA_first <= stream.peek() && stream.peek() <= ALPHA_last) {
 					fractions = fractions + ((static_cast<uint32_t>(stream.peek()) - static_cast<uint32_t>(ALPHA_first) + 10) << 28) / s;
 				}else {
 					break;

@@ -6,6 +6,7 @@
 
 
 #include <iostream>
+#include <sstream>
 #include "fix32.hpp"
 #include "fix64.hpp"
 //#include "fixmath.hpp"
@@ -179,14 +180,14 @@ bool casting_between_formatats(){
 }
 
 bool construct_from_string(){
-	constexpr fix32<10> a("3.14159265");
+	constexpr fix32<10> a("3.1415");
 	fix32<10> a_lower(3.140);
 	fix32<10> a_upper(3.142);
 	return a_lower < a && a < a_upper;
 }
 
 bool construct_from_signed_string() {
-	constexpr fix32<20> b("-3.14159265");
+	constexpr fix32<20> b("-3.1415");
 	fix32<20> b_lower(-3.142);
 	fix32<20> b_upper(-3.140);
 	return b_lower < b && b < b_upper;
@@ -205,6 +206,74 @@ bool construct_from_binary_string() {
 	bool test3 = value3 == expected;
 	
 	return test1 && test2 && test3;
+}
+
+bool construct_from_hex_string(){
+	constexpr int32_t iexpected = (0x12AB56FE);
+	
+	constexpr fix32<16> value1("0x12AB.56FE");
+	constexpr fix32<16> value2("12AB.56FE", 16);
+
+	constexpr fix32<20> value3("0x12a.b56fe");
+	constexpr fix32<20> value4("12a.b56fe", 16);
+	
+	bool test1 = value1 == fix32<16>::reinterpret(iexpected);
+	bool test2 = value2 == fix32<16>::reinterpret(iexpected);
+	bool test3 = value3 == fix32<20>::reinterpret(iexpected);
+	bool test4 = value4 == fix32<20>::reinterpret(iexpected);
+	
+	return test1 && test2 && test3 && test4;
+}
+
+bool construct_from_stringstream() {
+	std::stringstream str("3.1415");
+	fix32<10> a;
+	str >> a;
+	fix32<10> a_lower(3.140);
+	fix32<10> a_upper(3.142);
+	return a_lower < a && a < a_upper;
+}
+
+bool construct_from_signed_stringstream() {
+	std::stringstream str("-3.1415");
+	fix32<20> b;
+	str >> b;
+
+	fix32<20> b_lower(-3.142);
+	fix32<20> b_upper(-3.140);
+
+	return b_lower < b && b < b_upper;
+}
+
+bool construct_from_binary_stringstream() {
+	constexpr int32_t iexpected = (0b10101010) << (16 - 4);
+	constexpr fix32<16> expected = fix32<16>::reinterpret(iexpected);
+
+	std::stringstream str("0b1010.1010");
+
+	fix32<16> value;
+	str >> value;
+
+	return value == expected;
+}
+
+bool construct_from_hex_stringstream() {
+	constexpr int32_t iexpected = (0x12AB56FE);
+
+	std::stringstream str1("0x12AB.56FE");
+	std::stringstream str2("0x12ab.56fe");
+
+
+	fix32<16> value1;
+	fix32<16> value2;
+	
+	str1 >> value1;
+	str2 >> value2;
+
+	bool test1 = value1 == fix32<16>::reinterpret(iexpected);
+	bool test2 = value2 == fix32<16>::reinterpret(iexpected);
+
+	return test1 && test2;
 }
 
 // ------------------- fix64 -----------------------
@@ -327,6 +396,88 @@ bool fix64_construct_from_signed_string() {
 	return b_lower < b && b < b_upper;
 }
 
+bool fix64_construct_from_binary_string() {
+	constexpr int32_t iexpected = (0b10101010) << (16 - 4);
+	constexpr fix64<16> expected = fix64<16>::reinterpret(iexpected);
+
+	constexpr fix64<16> value1("0b1010.1010");
+	constexpr fix64<16> value2("1010.1010", 2);
+	constexpr fix64<16> value3("0b1010.1010", 2);
+
+	bool test1 = value1 == expected;
+	bool test2 = value2 == expected;
+	bool test3 = value3 == expected;
+
+	return test1 && test2 && test3;
+}
+
+bool fix64_construct_from_hex_string() {
+	constexpr int32_t iexpected = (0x12AB56FE);
+
+	constexpr fix64<16> value1("0x12AB.56FE");
+	constexpr fix64<16> value2("12AB.56FE", 16);
+
+	constexpr fix64<20> value3("0x12a.b56fe");
+	constexpr fix64<20> value4("12a.b56fe", 16);
+
+	bool test1 = value1 == fix64<16>::reinterpret(iexpected);
+	bool test2 = value2 == fix64<16>::reinterpret(iexpected);
+	bool test3 = value3 == fix64<20>::reinterpret(iexpected);
+	bool test4 = value4 == fix64<20>::reinterpret(iexpected);
+
+	return test1 && test2 && test3 && test4;
+}
+
+bool fix64_construct_from_stringstream() {
+	std::stringstream str("3.1415");
+	fix64<10> a;
+	str >> a;
+	fix64<10> a_lower(3.140);
+	fix64<10> a_upper(3.142);
+	return a_lower < a && a < a_upper;
+}
+
+bool fix64_construct_from_signed_stringstream() {
+	std::stringstream str("-3.1415");
+	fix64<20> b;
+	str >> b;
+
+	fix64<20> b_lower(-3.142);
+	fix64<20> b_upper(-3.140);
+
+	return b_lower < b && b < b_upper;
+}
+
+bool fix64_construct_from_binary_stringstream() {
+	constexpr int32_t iexpected = (0b10101010) << (16 - 4);
+	constexpr fix64<16> expected = fix64<16>::reinterpret(iexpected);
+
+	std::stringstream str("0b1010.1010");
+
+	fix64<16> value;
+	str >> value;
+
+	return value == expected;
+}
+
+bool fix64_construct_from_hex_stringstream() {
+	constexpr int64_t iexpected = (0x12AB56FE0000ULL);
+
+	std::stringstream str1("0x12AB.56FE");
+	std::stringstream str2("0x12ab.56fe");
+
+
+	fix64<32> value1;
+	fix64<32> value2;
+
+	str1 >> value1;
+	str2 >> value2;
+
+	bool test1 = value1 == fix64<32>::reinterpret(iexpected);
+	bool test2 = value2 == fix64<32>::reinterpret(iexpected);
+
+	return test1 && test2;
+}
 
 // ------- examples -------
 
@@ -389,8 +540,13 @@ int main(){
 	
 	TEST_CASE(construct_from_string);
 	TEST_CASE(construct_from_signed_string);
-	
 	TEST_CASE(construct_from_binary_string);
+	TEST_CASE(construct_from_hex_string);
+
+	TEST_CASE(construct_from_stringstream);
+	TEST_CASE(construct_from_signed_stringstream);
+	TEST_CASE(construct_from_binary_stringstream);
+	TEST_CASE(construct_from_hex_stringstream);
 	
 	// ------- fix64 -------
 	
@@ -404,8 +560,15 @@ int main(){
 	TEST_CASE(fix64_signed_division2);
 	TEST_CASE(fix64_negative_division);
 
-	TEST_CASE(fix64_construct_from_string) // TODO: fix failing test
-	TEST_CASE(fix64_construct_from_signed_string) // TODO: fix failing test
+	TEST_CASE(fix64_construct_from_string);
+	TEST_CASE(fix64_construct_from_signed_string) 
+	TEST_CASE(fix64_construct_from_binary_string);
+	TEST_CASE(fix64_construct_from_hex_string);
+
+	TEST_CASE(fix64_construct_from_stringstream);
+	TEST_CASE(fix64_construct_from_signed_stringstream);
+	TEST_CASE(fix64_construct_from_binary_stringstream);
+	TEST_CASE(fix64_construct_from_hex_stringstream);
 	
 	// ------- fixmath -------
 	
