@@ -1,16 +1,34 @@
 cmake_minimum_required(VERSION 3.18.0)
 
-set(PROJECT_NAME fixpoint_test)
-project(${PROJECT_NAME})
+
 
 # Basic compiler settings
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 14)
 
 # project building process: 
-add_executable(fixpoint_test
-	test.cpp
+project(test_fix32)
+add_executable(test_fix32
+	test/test_fix32.cpp
 	fix32.hpp
+)
+
+project(test_fix64)
+add_executable(test_fix64
+	test/test_fix64.cpp
+	fix64.hpp
+)
+
+project(test_fixmath)
+add_executable(test_fixmath
+	test/test_fixmath.cpp
+	fix32.hpp
+	fix64.hpp
+	fixmath.hpp
+)
+
+include_directories(
+	.
 )
 
 # Compiler Options for Clang:
@@ -84,10 +102,22 @@ else()
 endif()
 
 
-target_compile_options(${PROJECT_NAME} PUBLIC
+target_compile_options(test_fix32 PUBLIC
+	${COMPILER_FLAGS}
+)
+target_compile_options(test_fix64 PUBLIC
+	${COMPILER_FLAGS}
+)
+target_compile_options(test_fixmath PUBLIC
 	${COMPILER_FLAGS}
 )
 
-target_link_libraries(${PROJECT_NAME} PUBLIC
+target_link_libraries(test_fix32 PUBLIC
+
+)
+target_link_libraries(test_fix64 PUBLIC
+
+)
+target_link_libraries(test_fixmath PUBLIC
 
 )
