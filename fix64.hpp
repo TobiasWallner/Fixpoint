@@ -11,6 +11,19 @@
 #include <cinttypes>
 #include <type_traits>
 
+#include "definitions.hpp"
+
+namespace fixpoint_detail {
+	constexpr int bit_scan_reverse(uint64_t value) {
+		int index = -1;
+		while (value) {
+			value >>= 1;
+			++index;
+		}
+		return index;
+	}
+}
+
 template<size_t fractional_bits>
 class fix64{
 private:
@@ -207,40 +220,72 @@ public:
 	}
 
 	constexpr friend fix64 operator/ (fix64 lhs, fix64 rhs){
+		fixpoint_assert(rhs != 0, "Error: fixpoint division by zero");
+		
 		bool sign_lhs = lhs < 0;
 		bool sign_rhs = rhs < 0;
 		
-		lhs = sign_lhs ? -lhs : lhs;
-		rhs = sign_rhs ? -rhs : rhs;
+		// only solve the positive division and add the sign later
+		const uint64_t lhs_abs = sign_lhs ? -lhs.value : lhs.value;
+		const uint64_t rhs_abs = sign_rhs ? -rhs.value : rhs.value;
+
+		// making a 128-bit number out of two 64-bit values. 
+		// The denominator gets shifted upwards so that the result has the binary point at the right position.
+		//
+		// lhs.v * 2^fb   [upper, lower]
+		// ------------ = --------------
+		//    rhs.v             rhs.v
+		uint64_t lhs_lower = static_cast<uint64_t>(lhs_abs) << fractional_bits;
+		uint64_t lhs_upper = static_cast<uint64_t>(lhs_abs) >> (64-fractional_bits);
 		
-		const uint64_t lower = static_cast<uint64_t>(lhs.value) << fractional_bits;
-		const uint64_t upper = static_cast<uint64_t>(lhs.value) >> (64-fractional_bits);  
+		if(lhs_upper == 0){
+			// shortcut
+			return fix64::reinterpret(lhs_lower / rhs_abs);
+		}
 		
-		const uint64_t a = upper >> 32;
-		const uint64_t b = upper & ((1ULL<<32)-1);
-		const uint64_t c = lower >> 32;
-		const uint64_t d = lower & ((1ULL<<32)-1);
+		// shift up rhs until it is larger or equal to [uppper, lower]
+		const int rhs_lower_bsr = fixpoint_detail::bit_scan_reverse(rhs_abs);
+		const int lhs_upper_bsr = fixpoint_detail::bit_scan_reverse(lhs_upper);
+		const int shifts = lhs_upper_bsr + 64 - rhs_lower_bsr;
+		uint64_t rhs_lower = rhs_abs << shifts;
+		uint64_t rhs_upper = rhs_abs >> (64 - shifts);
+
+		// hard long division
+		uint64_t result = 0ULL;
+		for(int i = 0; i <= shifts; ++i){
+			result = result << 1;
+			if((lhs_upper > rhs_upper) || ((lhs_upper == rhs_upper) && (lhs_lower >= rhs_lower))){
+				const uint64_t neg_rhs_lower = -rhs_lower;
+				const bool neg_rhs_overflow = (neg_rhs_lower == 0);
+				const uint64_t neg_rhs_upper = ~rhs_upper + neg_rhs_overflow;
+
+				const uint64_t new_lhs_lower = lhs_lower + neg_rhs_lower;
+				const bool new_lhs_overflow = ((new_lhs_lower < lhs_lower) || (new_lhs_lower < neg_rhs_lower));
+				const uint64_t new_lhs_upper = lhs_upper + neg_rhs_upper + new_lhs_overflow;
+
+				lhs_lower = new_lhs_lower;
+				lhs_upper = new_lhs_upper;
+				result = result | 1ULL;
+			}
+			
+			if (lhs_upper == 0) {
+				// shortcut if both are representable int 64-bit instead of 128-bit
+				const uint64_t shortcut_division = lhs_lower / rhs_abs;
+				const uint64_t shifted_result = (result << (shifts - i));
+				result = shifted_result | shortcut_division;
+				break;
+			}
+			
+			// shift down rhs
+			// shift down rhs lower
+			rhs_lower = (rhs_lower >> 1);
+			// take care of the upper least significant bit and put it as the lower most significant bit
+			rhs_lower = rhs_lower| ((rhs_upper & 1ULL == 1ULL) ? (1ULL<<63) : 0ULL);
+			// shift down rhs upper
+			rhs_upper = rhs_upper >> 1;
+		}
 		
-		const uint64_t div1 = a / rhs.value;
-		const uint64_t rest1 = a % rhs.value;
-		
-		const uint64_t val2 = (rest1 << 32) | b;
-		const uint64_t div2 = val2 / rhs.value;
-		const uint64_t rest2 = val2 % rhs.value;
-		
-		const uint64_t val3 = (rest2 << 32) | c;
-		const uint64_t div3 = val3 / rhs.value;
-		const uint64_t rest3 = val3 % rhs.value;
-		
-		const uint64_t val4 = (rest3 << 32) | c;
-		const uint64_t div4 = val4 / rhs.value;
-		
-		const uint64_t result_val_ = div4 + (div3 << 32); // + (div2 << 64) + (div1 << 96)
-		
-		const uint64_t result_val = (sign_lhs != sign_rhs) ? -result_val_ : result_val_;
-		
-		const fix64 result = fix64::reinterpret(result_val);
-		return result;
+		return (sign_lhs == sign_rhs) ? fix64::reinterpret(result) : -fix64::reinterpret(result);
 	}
 	
 	template<typename Integer, std::enable_if_t<std::is_integral<Integer>::value, bool> = true>
