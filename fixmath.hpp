@@ -294,24 +294,6 @@ namespace fixpoint_detail{
 		const fix64<62> result = a * x4 + b * x3 + c * x2 + d * x;
 		return result;
 	}
-	
-	constexpr int bit_scan_reverse(uint32_t value) {
-		int index = -1;
-		while (value) {
-			value >>= 1;
-			++index;
-		}
-		return index;
-	}
-
-	constexpr int bit_scan_reverse(uint64_t value) {
-		int index = -1;
-		while (value) {
-			value >>= 1;
-			++index;
-		}
-		return index;
-	}
 }
 
 template<size_t N> constexpr fix32<N> log2(fix32<N> a){
