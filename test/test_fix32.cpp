@@ -97,7 +97,7 @@ bool addition(){
 	fix32<23> b = 11;
 	int32_t expected_result = (5 + 11) << 23;
 	fix32<23> result = a + b;
-	int32_t int_result = reinterpret_as_int32_t(result);
+	int32_t int_result = reinterpret_as_int32(result);
 	return expected_result == int_result;
 }
 
@@ -106,7 +106,7 @@ bool subtraction(){
 	fix32<23> b = 11;
 	int32_t expected_result = (5 - 11) << 23;
 	fix32<23> result = a - b;
-	int32_t int_result = reinterpret_as_int32_t(result);
+	int32_t int_result = reinterpret_as_int32(result);
 	return expected_result == int_result;
 }
 
@@ -131,7 +131,7 @@ bool self_addition(){
 	fix32<23> b = 11;
 	int32_t expected_result = (5 + 11) << 23;
 	a += b;
-	int32_t int_result = reinterpret_as_int32_t(a);
+	int32_t int_result = reinterpret_as_int32(a);
 	return expected_result == int_result;
 }
 
@@ -140,7 +140,7 @@ bool self_subtraction(){
 	fix32<23> b = 11;
 	int32_t expected_result = (5 - 11) << 23;
 	a -= b;
-	int32_t int_result = reinterpret_as_int32_t(a);
+	int32_t int_result = reinterpret_as_int32(a);
 	return expected_result == int_result;
 }
 
