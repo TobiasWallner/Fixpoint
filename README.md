@@ -4,7 +4,11 @@ FixPoint Library
 ## Overview
 
 This library provides two fixed-point arithmetic types, fix32 and fix64, which are header-only and templated to allow users to specify the number of fractional bits. These types offer a balance between the precision of floating-point numbers and the performance and determinism of integer arithmetic.
-Features.
+
+### Use Case
+This library is intendet to be used for Microcontrollers that do not have a hardware floating-point unit and offer a performant alternative to the software implementations of `float` and `double`. Disclaimer: Modern PC processors have very efficient floating-point units with great pipelining and will probably not see a performance increase. However, you may still want to use a fixed-point precision in some cases because of math. For example, when you want to calculate a fast moving-average by accumulating the differences of inputs and outputs, instead of summing over the whole buffer. Floating-point types may introduce drift due to numerical errors, whereas fixed-point types will be numerically stable/accurate. 
+
+### Features:
 
 * **C++14**: Supported
 * **Fixed-Point Arithmetic**: Perform arithmetic operations with fixed precision.
