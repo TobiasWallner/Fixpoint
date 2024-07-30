@@ -11,14 +11,14 @@ template<size_t N> constexpr fix32<N> abs(fix32<N> a){return (a >= 0) ? a : -a;}
 template<size_t N> constexpr fix64<N> abs(fix64<N> a){return (a >= 0) ? a : -a;}
 
 // ---------------- mod ----------------
+// note: this is the arithmetic modulo: the result is always in the range [0, r)
+// returns the equivalent of: l - round_down(a / b) * b
 
 template<size_t N> constexpr fix32<N> mod(fix32<N> l, fix32<N> r){
-	const fix32<N> t = abs(l) % abs(r);
-	return (r >= 0) ? t : -t;
+	return (l < 0 != r < 0) ? ((l % r) + r) : (l % r);
 }
 template<size_t N> constexpr fix64<N> mod(fix64<N> l, fix64<N> r){
-	const fix64<N> t = abs(l) % abs(r);
-	return (r >= 0) ? t : -t;
+	return (l < 0 != r < 0) ? ((l % r) + r) : (l % r);
 }
 
 // ---------------- remainder ----------------
@@ -150,7 +150,7 @@ constexpr fix64<N> lerp(Iterator x_first, Iterator x_last, Iterator y_first, Ite
 
 template<size_t N> constexpr fix32<N> exp2(fix32<N> a){
 	// TODO: increase precision by calculating the fractions with fix<30>
-	const int32_t value = a.reinterpret_as_int32_t();
+	const int32_t value = a.reinterpret_as_int32();
 		
 	if (value >= 0){
 		const uint32_t digits = value & ((1<<N)-1);
@@ -195,7 +195,7 @@ template<size_t N> constexpr fix32<N> exp2(fix32<N> a){
 }
 template<size_t N> constexpr fix64<N> exp2(fix64<N> a){
 	// TODO: increase precision by calculating the fractions with fix<30>
-	const int32_t value = a.reinterpret_as_int64_t();
+	const int32_t value = a.reinterpret_as_int64();
 		
 	if (value >= 0){
 		const uint64_t digits = value & ((1<<N)-1);
@@ -318,7 +318,7 @@ template<size_t N> constexpr fix32<N> log2(fix32<N> a){
 	// TODO: assertion for negative numbers
 	
 	// calculate: log2(v * 2^b) = log2(v) + b = log2(1+x) + b
-	const uint32_t ai = static_cast<uint32_t>(a.reinterpret_as_int32_t());
+	const uint32_t ai = static_cast<uint32_t>(a.reinterpret_as_int32());
 
 	const int32_t bsr = fixpoint_detail::bit_scan_reverse(ai);
 	const int32_t b = bsr - N;
@@ -331,3 +331,39 @@ template<size_t N> constexpr fix32<N> log2(fix32<N> a){
 	const fix32<N> result = k + b;
 	return result;
 }
+
+// ================ Rounding ================
+// ---------------- round_down / floor ----------------
+
+template<size_t N>
+constexpr fix32<N> round_down(fix32<N> x){
+	return fix32<N>::reinterpret(x.reinterpret_as_int32() & (~((static_cast<int32_t>(1) << N)-1)));
+}
+
+template<size_t N> constexpr fix32<N> floor(fix32<N> x){return round_down(x);}
+
+
+template<size_t N>
+constexpr fix64<N> round_down(fix64<N> x){
+	return fix64<N>::reinterpret(x.reinterpret_as_int64() & (~((static_cast<int64_t>(1) << N)-1)));
+}
+
+template<size_t N> constexpr fix64<N> floor(fix64<N> x){return round_down(x);}
+
+// ---------------- round_up / ceil ----------------
+
+template<size_t N>
+constexpr fix32<N> round_up(fix32<N> x){
+	const fix32<N> rd = round_down(x);
+	return (rd == x) ? rd : (rd + 1);
+}
+
+template<size_t N> constexpr fix32<N> ceil(fix32<N> x){return round_up(x);}
+
+template<size_t N>
+constexpr fix64<N> round_up(fix64<N> x){
+	const fix64<N> rd = round_down(x);
+	return (rd == x) ? rd : (rd + 1);
+}
+
+template<size_t N> constexpr fix64<N> ceil(fix64<N> x){return round_up(x);}
