@@ -13,6 +13,17 @@
 
 #include "definitions.hpp"
 
+namespace fixpoint_detail {
+	constexpr int bit_scan_reverse(uint32_t value) {
+		int index = -1;
+		while (value) {
+			value >>= 1;
+			++index;
+		}
+		return index;
+	}
+}
+
 template<size_t fractional_bits>
 class fix32{
 private:
@@ -179,12 +190,14 @@ public:
 	}
 
 	constexpr friend fix32 operator/ (fix32 lhs, fix32 rhs){
+		fixpoint_assert(rhs != 0, "Error: fixpoint division by zero");
 		const int64_t temp = (static_cast<int64_t>(lhs.value) << fractional_bits) / static_cast<int64_t>(rhs.value);
 		return fix32::reinterpret(static_cast<int32_t>(temp));
 	}
 	
 	template<typename Integer, std::enable_if_t<std::is_integral<Integer>::value, bool> = true>
 	constexpr friend fix32 operator/ (fix32 lhs, Integer rhs){
+		fixpoint_assert(rhs != 0, "Error: fixpoint division by zero");
 		return fix32::reinterpret(lhs.value / static_cast<int32_t>(rhs));
 	}
 	
