@@ -344,9 +344,9 @@ bool test32_mod_mm(){
 bool test64_mod_pp(){
 	const fix64<41> a(30584.5);
 	const fix64<41> b(13);
-	const fix64<41> m = mod(a, b); print_result(mod(a, b))
-	
-	const fix64<41> expected = a - round_down(a / b) * b; // TODO: fix error in calculation of the expected value
+	const fix64<41> m = mod(a, b);
+
+	const fix64<41> expected = a - round_down(a / b) * b;
 	
 	return m == expected;
 }
