@@ -17,6 +17,10 @@ private:
 	int64_t value;
 	
 public:
+
+	static constexpr int64_t max = (1 << (63-fractional_bits)) - 1;
+	static constexpr int64_t min = -(1 << (63-fractional_bits));
+
 	class ReinterpretToken{};
 
 	constexpr fix64() = default;
@@ -131,9 +135,9 @@ public:
 	template<size_t other_frac_bits>
 	constexpr fix64(const fix64<other_frac_bits>& other){
 		if (fractional_bits >= other_frac_bits)
-			this->value = other.reinterpret_as_int64_t() << static_cast<uint32_t>(fractional_bits - other_frac_bits);
+			this->value = other.reinterpret_as_int64() << static_cast<uint32_t>(fractional_bits - other_frac_bits);
 		else
-			this->value = other.reinterpret_as_int64_t() >> static_cast<uint32_t>(other_frac_bits - fractional_bits);
+			this->value = other.reinterpret_as_int64() >> static_cast<uint32_t>(other_frac_bits - fractional_bits);
 	}
 	
 	inline fix64& operator= (const fix64&) = default;
@@ -244,6 +248,8 @@ public:
 		return fix64::reinterpret(lhs.value / static_cast<int64_t>(rhs));
 	}
 
+	constexpr friend fix64 operator% (fix64 lhs, fix64 rhs){return fix64::reinterpret(lhs.value % rhs.value);}
+
 	inline fix64& operator+= (fix64 rhs){return *this = *this + rhs;}
 	inline fix64& operator-= (fix64 rhs){return *this = *this - rhs;}
 	inline fix64& operator*= (fix64 rhs){return *this = *this * rhs;}
@@ -282,10 +288,10 @@ public:
 	}
 	
 	constexpr int64_t static_cast_to_int64_t() const {return this->value >> fractional_bits;}
-	constexpr int64_t reinterpret_as_int64_t() const {return this->value;}
+	constexpr int64_t reinterpret_as_int64() const {return this->value;}
 	
 	constexpr friend int64_t static_cast_to_int64_t(fix64 f){return f.value >> fractional_bits;}
-	constexpr friend int64_t reinterpret_as_int64_t(fix64 f){return f.value;}
+	constexpr friend int64_t reinterpret_as_int64(fix64 f){return f.value;}
 	
 	template<class Stream>
 	friend Stream& print(Stream& stream, fix64<fractional_bits> f, size_t significant_places_after_comma=3) {
