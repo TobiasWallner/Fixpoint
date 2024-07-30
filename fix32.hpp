@@ -11,27 +11,39 @@
 #include <cinttypes>
 #include <type_traits>
 
+#include "definitions.hpp"
+
 template<size_t fractional_bits>
 class fix32{
 private:
 	int32_t value;
 	
 public:
+
+	static constexpr int32_t max = (1 << (31-fractional_bits)) - 1;
+	static constexpr int32_t min = -(1 << (31-fractional_bits));
+	
+
 	class ReinterpretToken{};
 
 	constexpr fix32() = default;
 	constexpr fix32(const fix32&) = default;
-	constexpr fix32(int32_t number) : value(number << fractional_bits){}
+	constexpr fix32(int32_t num) : value(num << fractional_bits){
+		fixpoint_assert(num <= fix32::max, "Truncation error constructing fix<" << fractional_bits << ">(int32_t num) with num=" << num << ". 'num' is larger than the largest representable number fix<" << fractional_bits << ">::max=" << fix32<fractional_bits>::max << ".");
+		fixpoint_assert(num <= fix32::max, "Truncation error constructing fix<" << fractional_bits << ">(int32_t num) with num=" << num << ". 'num' is smaller than the smallest representable number fix<" << fractional_bits << ">::min=" << fix32<fractional_bits>::min << ".");
+	}
 	
-	constexpr fix32(int32_t number, ReinterpretToken t) : value(number){}
-	
+	constexpr fix32(int32_t num, ReinterpretToken t) : value(num){}
+
 	template<typename Integer, std::enable_if_t<std::is_integral<Integer>::value, bool> = true>
-	fix32(Integer number) : fix32(static_cast<int32_t>(number)){}
-	
+	fix32(Integer num) : fix32(static_cast<int32_t>(num)){}
+
 	template<typename Integer, std::enable_if_t<std::is_integral<Integer>::value, bool> = true>
-	fix32(Integer number, ReinterpretToken t) : fix32(static_cast<int32_t>(number), t){}
+	fix32(Integer num, ReinterpretToken t) : fix32(static_cast<int32_t>(num), t){}
 
 	inline fix32(float num) : value(0) {
+		fixpoint_assert(num <= fix32::max, "Truncation error constructing fix<" << fractional_bits << ">(float num) with num=" << num << ". 'num' is larger than the largest representable number fix<" << fractional_bits << ">::max=" << fix32<fractional_bits>::max << ".");
+		fixpoint_assert(num <= fix32::max, "Truncation error constructing fix<" << fractional_bits << ">(float num) with num=" << num << ". 'num' is smaller than the smallest representable number fix<" << fractional_bits << ">::min=" << fix32<fractional_bits>::min << ".");
 		if (num != 0.f) {
 			const uint32_t inum = *reinterpret_cast<const uint32_t*>(&num);
 			const uint32_t float_mantissa = (inum & ((1 << 23) - 1)) | (1 << 23);
@@ -46,7 +58,11 @@ public:
 		}
 	}
 	
-	inline fix32(double num) : fix32(static_cast<float>(num)){/*TODO: propper conversion*/}
+	inline fix32(double num) : fix32(static_cast<float>(num)){
+		fixpoint_assert(num <= fix32::max, "Truncation error constructing fix<" << fractional_bits << ">(double num) with num=" << num << ". 'num' is larger than the largest representable number fix<" << fractional_bits << ">::max=" << fix32<fractional_bits>::max << ".");
+		fixpoint_assert(num <= fix32::max, "Truncation error constructing fix<" << fractional_bits << ">(double num) with num=" << num << ". 'num' is smaller than the smallest representable number fix<" << fractional_bits << ">::min=" << fix32<fractional_bits>::min << ".");
+		/*TODO: propper conversion*/
+	}
 	
 	constexpr fix32(const char* str, int radix=10) : value(0){
 		bool sign = false;
@@ -134,35 +150,21 @@ public:
 	template<size_t other_frac_bits>
 	constexpr fix32(const fix32<other_frac_bits>& other){
 		if (fractional_bits >= other_frac_bits)
-			this->value = (other.reinterpret_as_int32_t() << (static_cast<uint32_t>(fractional_bits - other_frac_bits)));
+			this->value = (other.reinterpret_as_int32() << (static_cast<uint32_t>(fractional_bits - other_frac_bits)));
 		else
-			this->value = (other.reinterpret_as_int32_t() >> (static_cast<uint32_t>(other_frac_bits - fractional_bits)));
+			this->value = (other.reinterpret_as_int32() >> (static_cast<uint32_t>(other_frac_bits - fractional_bits)));
 	}
 	
 	inline fix32& operator= (const fix32&) = default;
 	
 	// Arithmetic operators
 	
-	constexpr friend fix32 operator+ (fix32 lhs, fix32 rhs){
-		fix32 result;
-		result.value = lhs.value + rhs.value;
-		return result;
-	}
-	
-	constexpr friend fix32 operator- (fix32 a){
-		fix32 result;
-		result.value = -a.value;
-		return result;
-	}
-	
-	constexpr friend fix32 operator- (fix32 lhs, fix32 rhs){
-		fix32 result;
-		result.value = lhs.value - rhs.value;
-		return result;
-	}
+	constexpr friend fix32 operator+ (fix32 lhs, fix32 rhs){return fix32::reinterpret(lhs.value + rhs.value);}
+	constexpr friend fix32 operator- (fix32 a){return fix32::reinterpret(-a.value);}
+	constexpr friend fix32 operator- (fix32 lhs, fix32 rhs){return fix32::reinterpret(lhs.value - rhs.value);}
 	
 	constexpr friend fix32 operator* (fix32 lhs, fix32 rhs){
-		int64_t temp = static_cast<int64_t>(lhs.value) * static_cast<int64_t>(rhs.value);
+		const int64_t temp = static_cast<int64_t>(lhs.value) * static_cast<int64_t>(rhs.value);
 		return fix32::reinterpret(static_cast<int32_t>(static_cast<uint32_t>(temp >> fractional_bits)));
 	}
 	
@@ -177,7 +179,7 @@ public:
 	}
 
 	constexpr friend fix32 operator/ (fix32 lhs, fix32 rhs){
-		int64_t temp = (static_cast<int64_t>(lhs.value) << fractional_bits) / static_cast<int64_t>(rhs.value);
+		const int64_t temp = (static_cast<int64_t>(lhs.value) << fractional_bits) / static_cast<int64_t>(rhs.value);
 		return fix32::reinterpret(static_cast<int32_t>(temp));
 	}
 	
@@ -186,9 +188,7 @@ public:
 		return fix32::reinterpret(lhs.value / static_cast<int32_t>(rhs));
 	}
 	
-	constexpr friend fix32 operator% (fix32 lhs, fix32 rhs){
-		return fix32::reinterpret(lhs.value() % rhs.value);
-	}
+	constexpr friend fix32 operator% (fix32 lhs, fix32 rhs){return fix32::reinterpret(lhs.value % rhs.value);}
 
 	inline fix32& operator+= (fix32 rhs){return *this = *this + rhs;}
 	inline fix32& operator-= (fix32 rhs){return *this = *this - rhs;}
@@ -228,10 +228,10 @@ public:
 	}
 	
 	constexpr int32_t static_cast_to_int32_t() const {return this->value >> fractional_bits;}
-	constexpr int32_t reinterpret_as_int32_t() const {return this->value;}
+	constexpr int32_t reinterpret_as_int32() const {return this->value;}
 	
 	constexpr friend int32_t static_cast_to_int32_t(fix32 f){return f.value >> fractional_bits;}
-	constexpr friend int32_t reinterpret_as_int32_t(fix32 f){return f.value;}
+	constexpr friend int32_t reinterpret_as_int32(fix32 f){return f.value;}
 	
 	template<class Stream>
 	friend Stream& print(Stream& stream, fix32 f, size_t significant_places_after_comma=3) {
